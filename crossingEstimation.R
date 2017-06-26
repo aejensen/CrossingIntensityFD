@@ -12,25 +12,25 @@ rm(list=ls())
 
 #Squared exponential covariance function + noise
 cSE <- function(s, t, par) {
-	if(length(par) != 2) stop("wrong number of parameters")
+  if(length(par) != 2) stop("wrong number of parameters")
 	
   tau <- abs(s-t)
-	l <- par[1]
-	epsilon <- par[2]
+  l <- par[1]
+  epsilon <- par[2]
 
-	exp(-(tau^2 / (2*l^2))) + as.numeric(tau == 0)*epsilon
+  exp(-(tau^2 / (2*l^2))) + as.numeric(tau == 0)*epsilon
 }
 
 #Rational quadratic covariance function
 cRQ <- function(s, t, par) {
-	if(length(par) != 3) stop("wrong number of parameters")
+  if(length(par) != 3) stop("wrong number of parameters")
 	
   tau <- abs(s-t)
-	alpha <- par[1]
-	lambda <- par[2]
-	epsilon <- par[3]
+  alpha <- par[1]
+  lambda <- par[2]
+  epsilon <- par[3]
   
-	(1 + tau^2 / (2*alpha*lambda^2))^(-alpha) + as.numeric(tau == 0)*epsilon
+  (1 + tau^2 / (2*alpha*lambda^2))^(-alpha) + as.numeric(tau == 0)*epsilon
 }
 
 #Fourier covariance function
@@ -44,13 +44,13 @@ cF <- function(s, t, par) {
 
 #Simulate functional data
 simulateProcesses <- function(n, t, type) {
-	if(type == 1) {
-		covMat <- outer(t, t, cF)
-	} else if(type == 2) {
+  if(type == 1) {
+    covMat <- outer(t, t, cF)
+  } else if(type == 2) {
     covMat <- outer(t, t, cSE, par=c(0.1, 0))
-	} else {
-		stop("wrong type")
-	}
+  } else {
+    stop("wrong type")
+  }
   dat <- rmvnorm(n, sigma=covMat)
 }
 
@@ -62,11 +62,12 @@ getDerivative <- function(t, y, spar=NULL, all.knots=TRUE) {
 
 #Empirical estimate
 empEstimate <- function(y, thres=0) {
-	sum(y[1:(length(y) - 1)] > thres & y[2:length(y)] < thres)
+  sum(y[1:(length(y) - 1)] > thres & y[2:length(y)] < thres)
 }
 
 #Do FPCA analyse of functional data set
 getFPCA <- function(t, y) {
+  #Get FPCA decomposition
   tList <- lapply(1:n, function(k) t)
   dList <- lapply(1:n, function(k) y[k,])
   pca <- fdapace::FPCA(dList, tList)
@@ -82,17 +83,17 @@ getFPCA <- function(t, y) {
   yEst <- matrix(NA, nrow(y), length(mu))
   ydEst <- matrix(NA, nrow(y), length(mu))
   for(i in 1:nrow(y)) {
-  	yEst[i,] <- mu
-  	ydEst[i,] <- muD
-  	for(j in 1:ncol(pca$phi)) {
-  		yEst[i,] <- yEst[i,] + scores[i,j] * phi[,j]
-  		ydEst[i,] <- ydEst[i,] + scores[i,j] * phiD[,j]
-  	}
+    yEst[i,] <- mu
+    ydEst[i,] <- muD
+    for(j in 1:ncol(pca$phi)) {
+      yEst[i,] <- yEst[i,] + scores[i,j] * phi[,j]
+      ydEst[i,] <- ydEst[i,] + scores[i,j] * phiD[,j]
+    }
   }
     
   list(t = t, mu = mu, phi = phi, scores = scores,
-       muD = muD, phiD = phiD, lambda=pca$lambda,
-       yest = yEst, ydest = ydEst)
+      muD = muD, phiD = phiD, lambda=pca$lambda,
+      yest = yEst, ydest = ydEst)
 }
 
 #Remove at some point
@@ -120,36 +121,36 @@ doPCAnormal <- function(pcaRes, u, k, type="total") {
 
   if(type == "total") {
     #out <- integrate(function(z) abs(z) * dmvnorm(cbind(0, z), muVec, covMat), -Inf, Inf)$value
-  	out <- pracma::quadinf(function(z) abs(z) * dmvnorm(cbind(u, z), muVec, covMat), -Inf, Inf)$Q
+    out <- pracma::quadinf(function(z) abs(z) * dmvnorm(cbind(u, z), muVec, covMat), -Inf, Inf)$Q
   } else if(type == "upper") {
-  	#out <- integrate(function(z) max(0, z) * dmvnorm(cbind(0, z), muVec, covMat), -Inf, Inf)$value
-  	out <- pracma::quadinf(function(z) max(0, z) * dmvnorm(cbind(u, z), muVec, covMat), -Inf, Inf)$Q
+    #out <- integrate(function(z) max(0, z) * dmvnorm(cbind(0, z), muVec, covMat), -Inf, Inf)$value
+    out <- pracma::quadinf(function(z) max(0, z) * dmvnorm(cbind(u, z), muVec, covMat), -Inf, Inf)$Q
   } else if(type == "lower") {
-  	#out = integrate(function(z) max(0, -z) * dmvnorm(cbind(0, z), muVec, covMat), -Inf, Inf)$value
-  	out <- pracma::quadinf(function(z) max(0, -z) * dmvnorm(cbind(u, z), muVec, covMat), -Inf, Inf)$Q
+    #out = integrate(function(z) max(0, -z) * dmvnorm(cbind(0, z), muVec, covMat), -Inf, Inf)$value
+    out <- pracma::quadinf(function(z) max(0, -z) * dmvnorm(cbind(u, z), muVec, covMat), -Inf, Inf)$Q
   } else {
-  	stop("wrong type")
+    stop("wrong type")
   }
   out
 }
 
 doPCAkernel <- function(pcaRes, k) {
-  
+  #
 }
 
 #Do non-parametric sequential estimation
 doNonParametricKernel <- function(pcaRes, u, k, type="total") {
-	#'arg' should be one of “cv.ml”, “cv.ls”, “normal-reference”
+  #'arg' should be one of “cv.ml”, “cv.ls”, “normal-reference”
   kEst <- np::npudens(~x + xd, data=data.frame(x=pcaRes$yest[,k], xd=pcaRes$ydest[,k]))
   
   if(type == "total") {
-  	out <- pracma::quadinf(function(z) abs(z) * predict(kEst, newdata=data.frame(x=u, xd=z)), -Inf, Inf)$Q
+    out <- pracma::quadinf(function(z) abs(z) * predict(kEst, newdata=data.frame(x=u, xd=z)), -Inf, Inf)$Q
   } else if(type == "upper") {
-  	out <- pracma::quadinf(function(z) max(0, z) * predict(kEst, newdata=data.frame(x=u, xd=z)), -Inf, Inf)$Q
+    out <- pracma::quadinf(function(z) max(0, z) * predict(kEst, newdata=data.frame(x=u, xd=z)), -Inf, Inf)$Q
   } else if(type == "lower") {
-  	out <- pracma::quadinf(function(z) max(0, -z) * predict(kEst, newdata=data.frame(x=u, xd=z)), -Inf, Inf)$Q
+    out <- pracma::quadinf(function(z) max(0, -z) * predict(kEst, newdata=data.frame(x=u, xd=z)), -Inf, Inf)$Q
   } else {
-  	stop("wrong type")
+    stop("wrong type")
   }
   
   out
@@ -157,29 +158,29 @@ doNonParametricKernel <- function(pcaRes, u, k, type="total") {
  
 #Main function for estimating the crossing intensity
 crossingIntensity <- function(u, pcaRes, direction, method, parallel=FALSE, mc.cores) {
-	t <- pcaRes$t
+  t <- pcaRes$t
 	
-	if(method == "normal") {
+  if(method == "normal") {
     if(parallel) {
-    	cross <- unlist(parallel::mclapply(1:length(t), function(k) doPCAnormal(pcaRes, u = u, k, direction), mc.cores=mc.cores))
-		} else {
-			cross <- sapply(1:length(t), function(k) doPCAnormal(pcaRes, u = u, k, direction))
-		}
-	} else if(method == "pca") {
-    #
-		stop("not implemented yet")
-    #
-	} else if(method == "nonparametric") {
-    if(parallel) {
-    	cross <- unlist(parallel::mclapply(1:length(t), function(k) doNonParametricKernel(pca, u = u, k, direction), mc.cores=mc.cores))
+      cross <- unlist(parallel::mclapply(1:length(t), function(k) doPCAnormal(pcaRes, u = u, k, direction), mc.cores = mc.cores))
     } else {
-      cross <- sapply(1:length(t), function(k) doNonParametricKernel(pca, u = u, k, direction))
+      cross <- sapply(1:length(t), function(k) doPCAnormal(pcaRes, u = u, k, direction))
     }
-	} else {
-		stop("wrong method")
-	}
+  } else if(method == "pca") {
+    #
+    stop("not implemented yet")
+    #
+  } else if(method == "nonparametric") {
+    if(parallel) {
+      cross <- unlist(parallel::mclapply(1:length(t), function(k) doNonParametricKernel(pcaRes, u = u, k, direction), mc.cores = mc.cores))
+    } else {
+      cross <- sapply(1:length(t), function(k) doNonParametricKernel(pcaRes, u = u, k, direction))
+    }
+  } else {
+    stop("wrong method")
+  }
 	
-	list(x = t, y = cross)
+  list(x = t, y = cross)
 }
 
 
